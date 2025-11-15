@@ -14,6 +14,8 @@ const SERVICES = {
   assessment: process.env.ASSESSMENT_SERVICE_URL || 'http://localhost:3003',
   appeals: process.env.APPEALS_SERVICE_URL || 'http://localhost:3004',
   reporting: process.env.REPORTING_SERVICE_URL || 'http://localhost:3005',
+  ai: process.env.AI_SERVICE_URL || 'http://localhost:3006',
+  dataIngestion: process.env.DATA_INGESTION_SERVICE_URL || 'http://localhost:3007',
 };
 
 /**
@@ -154,6 +156,68 @@ export function setupProxies(app: Express) {
       },
       onProxyReq: forwardContext,
       onError: handleProxyError('reporting'),
+    })
+  );
+
+  // ============================================================================
+  // AI Service
+  // ============================================================================
+
+  app.use(
+    '/api/v1/ai',
+    authenticate,
+    tenantRateLimit({
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 30,
+    }),
+    createProxyMiddleware({
+      target: SERVICES.ai,
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/v1/ai': '/api/v1/ai',
+      },
+      onProxyReq: forwardContext,
+      onError: handleProxyError('ai'),
+    })
+  );
+
+  // ============================================================================
+  // Data Ingestion Service
+  // ============================================================================
+
+  app.use(
+    '/api/v1/ingestion',
+    authenticate,
+    tenantRateLimit({
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 100,
+    }),
+    createProxyMiddleware({
+      target: SERVICES.dataIngestion,
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/v1/ingestion': '/api/v1/ingestion',
+      },
+      onProxyReq: forwardContext,
+      onError: handleProxyError('data-ingestion'),
+    })
+  );
+
+  app.use(
+    '/api/v1/sources',
+    authenticate,
+    tenantRateLimit({
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 100,
+    }),
+    createProxyMiddleware({
+      target: SERVICES.dataIngestion,
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/v1/sources': '/api/v1/sources',
+      },
+      onProxyReq: forwardContext,
+      onError: handleProxyError('data-ingestion'),
     })
   );
 

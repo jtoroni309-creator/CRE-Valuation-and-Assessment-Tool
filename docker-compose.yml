@@ -63,6 +63,8 @@ services:
       ASSESSMENT_SERVICE_URL: http://assessment-service:3003
       APPEALS_SERVICE_URL: http://appeals-service:3004
       REPORTING_SERVICE_URL: http://reporting-service:3005
+      AI_SERVICE_URL: http://ai-service:3006
+      DATA_INGESTION_SERVICE_URL: http://data-ingestion-service:3007
       AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
       JWT_SECRET: dev-secret-change-in-production
       LOG_LEVEL: debug
@@ -193,6 +195,60 @@ services:
       DB_NAME: axxiom_dev
       DB_USER: axxiom_admin
       DB_PASSWORD: axxiom_dev_password
+      AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      LOG_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - axxiom-network
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: services/ai-service/Dockerfile
+    container_name: axxiom-ai-service
+    ports:
+      - '3006:3006'
+    environment:
+      NODE_ENV: development
+      PORT: 3006
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      AZURE_OPENAI_DEPLOYMENT_NAME: ${AZURE_OPENAI_DEPLOYMENT_NAME:-gpt-4}
+      AZURE_SEARCH_ENDPOINT: ${AZURE_SEARCH_ENDPOINT:-}
+      AZURE_SEARCH_API_KEY: ${AZURE_SEARCH_API_KEY:-}
+      AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      LOG_LEVEL: debug
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - axxiom-network
+
+  data-ingestion-service:
+    build:
+      context: .
+      dockerfile: services/data-ingestion-service/Dockerfile
+    container_name: axxiom-data-ingestion-service
+    ports:
+      - '3007:3007'
+    environment:
+      NODE_ENV: development
+      PORT: 3007
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: axxiom_dev
+      DB_USER: axxiom_admin
+      DB_PASSWORD: axxiom_dev_password
+      MLS_API_KEY: ${MLS_API_KEY:-}
+      MLS_ENDPOINT: ${MLS_ENDPOINT:-}
+      COSTAR_API_KEY: ${COSTAR_API_KEY:-}
+      OCR_API_KEY: ${OCR_API_KEY:-}
       AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
       JWT_SECRET: dev-secret-change-in-production
       LOG_LEVEL: debug
