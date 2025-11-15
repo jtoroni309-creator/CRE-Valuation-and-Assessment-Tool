@@ -1,0 +1,206 @@
+# Dependencies
+node_modules/
+venv/
+env/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.npm
+.pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+.vercel/
+*.tsbuildinfo
+.turbo/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+*.env
+.envrc
+
+# Secrets and credentials
+secrets/
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+credentials.json
+service-account.json
+client-secret.json
+azure-credentials.json
+
+# Azure
+.azure/
+*.azurePubxml
+*.pubxml
+*.publishsettings
+local.settings.json
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+crash.log
+crash.*.log
+terraform.rc
+.terraformrc
+
+# Bicep
+*.bicepparam
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+kustomization.yaml
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.iml
+.vscode-test/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+.coverage
+htmlcov/
+.pytest_cache/
+.hypothesis/
+test-results/
+playwright-report/
+cypress/videos/
+cypress/screenshots/
+
+# ML/AI
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.joblib
+*.onnx
+*.pt
+*.pth
+*.safetensors
+*.bin
+checkpoints/
+wandb/
+mlruns/
+.mlflow/
+runs/
+models/saved/
+*.ipynb_checkpoints/
+
+# Data
+data/raw/
+data/processed/
+data/temp/
+*.csv
+*.parquet
+*.arrow
+*.feather
+*.db
+*.sqlite
+*.sqlite3
+
+# Documentation build
+docs/_build/
+docs/.doctrees/
+site/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+*~
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+*.cache
+
+# Generated files
+generated/
+codegen/
+*.generated.*
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Monitoring and observability
+.prometheus/
+.grafana/
+
+# Local development
+.local/
+.scratch/
+.sandbox/
+tmp/
+temp/

@@ -1,0 +1,166 @@
+# ============================================================================
+# Axxiom Platform - Terraform Variables Example
+# ============================================================================
+# Copy this file to terraform.tfvars and customize for your environment
+# DO NOT commit terraform.tfvars to version control
+# ============================================================================
+
+# ============================================================================
+# Environment Configuration
+# ============================================================================
+
+environment        = "dev"
+location           = "eastus2"
+secondary_location = "centralus"
+
+# ============================================================================
+# Networking Configuration
+# ============================================================================
+
+vnet_address_space         = ["10.0.0.0/16"]
+enable_ddos_protection     = false
+enable_private_endpoints   = true
+
+# ============================================================================
+# AKS Configuration
+# ============================================================================
+
+kubernetes_version = "1.28.3"
+
+aks_node_pools = {
+  system = {
+    vm_size   = "Standard_D4s_v5"
+    min_count = 3
+    max_count = 5
+  }
+  api = {
+    vm_size   = "Standard_D8s_v5"
+    min_count = 3
+    max_count = 10
+  }
+  compute = {
+    vm_size   = "Standard_D8s_v5"
+    min_count = 2
+    max_count = 8
+  }
+  gpu = {
+    vm_size   = "Standard_NC6s_v3"
+    min_count = 0
+    max_count = 3
+  }
+}
+
+enable_aks_network_policy = "azure"
+
+# ============================================================================
+# Database Configuration
+# ============================================================================
+
+sql_sku                    = "GP_S_Gen5_2"
+sql_max_size_gb            = 100
+enable_sql_geo_replication = false
+cosmos_consistency_level   = "Session"
+postgresql_sku             = "GP_Standard_D2s_v3"
+
+# ============================================================================
+# Storage Configuration
+# ============================================================================
+
+storage_account_tier                    = "Standard"
+storage_replication_type                = "LRS"
+enable_data_lake_hierarchical_namespace = true
+
+# ============================================================================
+# ML/AI Configuration
+# ============================================================================
+
+azure_ml_sku = "Basic"
+
+openai_deployments = {
+  gpt4o = {
+    model_name    = "gpt-4o"
+    model_version = "2024-05-13"
+    scale_type    = "Standard"
+    capacity      = 50
+  }
+  gpt4_turbo = {
+    model_name    = "gpt-4"
+    model_version = "turbo-2024-04-09"
+    scale_type    = "Standard"
+    capacity      = 30
+  }
+  embeddings = {
+    model_name    = "text-embedding-ada-002"
+    model_version = "2"
+    scale_type    = "Standard"
+    capacity      = 80
+  }
+}
+
+ai_search_sku = "basic"
+
+# ============================================================================
+# API Management Configuration
+# ============================================================================
+
+apim_sku             = "Developer_1"
+apim_publisher_name  = "Axxiom Platform"
+apim_publisher_email = "admin@axxiom.ai"
+
+# ============================================================================
+# Monitoring Configuration
+# ============================================================================
+
+log_analytics_retention_days    = 30
+enable_application_insights     = true
+app_insights_sampling_percentage = 100
+
+# ============================================================================
+# Security Configuration
+# ============================================================================
+
+enable_key_vault_soft_delete          = true
+key_vault_soft_delete_retention_days  = 90
+enable_azure_defender                 = false
+
+# Allowed IP ranges for development (update with your IPs)
+allowed_ip_ranges = [
+  # "1.2.3.4/32",  # Office IP
+  # "5.6.7.8/32",  # VPN IP
+]
+
+# ============================================================================
+# Messaging Configuration
+# ============================================================================
+
+event_hub_sku   = "Standard"
+service_bus_sku = "Standard"
+
+# ============================================================================
+# Backup & DR Configuration
+# ============================================================================
+
+enable_backups        = true
+backup_retention_days = 7
+enable_geo_redundancy = false
+
+# ============================================================================
+# Tagging
+# ============================================================================
+
+tags = {
+  Platform    = "Axxiom"
+  Environment = "Development"
+  CostCenter  = "Engineering"
+  Owner       = "Platform Team"
+  Compliance  = "SOC2"
+  ManagedBy   = "Terraform"
+}
+
+# ============================================================================
+# Feature Flags
+# ============================================================================
+
+enable_experimental_features = true
+enable_cost_optimization     = true
+enable_high_availability     = false

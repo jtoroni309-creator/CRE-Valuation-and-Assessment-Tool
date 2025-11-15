@@ -1,0 +1,897 @@
+openapi: 3.0.3
+info:
+  title: Axxiom Valuation API
+  description: |
+    REST API for property valuation services in the Axxiom platform.
+
+    This API provides endpoints for:
+    - Creating and managing property valuations
+    - Selecting comparable properties
+    - Generating valuation reports
+    - Accessing valuation explanations and model insights
+
+    ## Authentication
+    All endpoints require Bearer token authentication using Azure AD.
+
+    ## Rate Limiting
+    - 100 requests per 15 minutes per tenant
+    - 1000 requests per day per tenant
+
+    ## Versioning
+    This is version 1 of the API. Breaking changes will result in a new version.
+  version: 1.0.0
+  contact:
+    name: Axxiom API Support
+    email: api-support@axxiom.ai
+    url: https://docs.axxiom.ai
+  license:
+    name: Proprietary
+    url: https://axxiom.ai/license
+
+servers:
+  - url: https://api.axxiom.ai/v1
+    description: Production server
+  - url: https://api-test.axxiom.ai/v1
+    description: Testing server
+  - url: https://api-dev.axxiom.ai/v1
+    description: Development server
+  - url: http://localhost:3000/api/v1
+    description: Local development
+
+tags:
+  - name: Valuations
+    description: Property valuation operations
+  - name: Comparables
+    description: Comparable property selection
+  - name: Reports
+    description: Valuation report generation
+  - name: Explanations
+    description: Model explainability and insights
+
+security:
+  - BearerAuth: []
+
+paths:
+  /valuations:
+    get:
+      tags:
+        - Valuations
+      summary: List valuations
+      description: Retrieve a paginated list of valuations for the authenticated tenant
+      operationId: listValuations
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: property_id
+          in: query
+          description: Filter by property ID
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: Filter by valuation status
+          schema:
+            type: string
+            enum: [draft, pending, approved, rejected]
+        - name: approach
+          in: query
+          description: Filter by valuation approach
+          schema:
+            type: string
+            enum: [sales_comparison, income, cost, reconciled]
+        - name: created_after
+          in: query
+          description: Filter valuations created after this date
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Valuation'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Valuations
+      summary: Create valuation
+      description: Create a new property valuation request
+      operationId: createValuation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateValuationRequest'
+      responses:
+        '201':
+          description: Valuation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Valuation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /valuations/{valuation_id}:
+    get:
+      tags:
+        - Valuations
+      summary: Get valuation
+      description: Retrieve a specific valuation by ID
+      operationId: getValuation
+      parameters:
+        - $ref: '#/components/parameters/ValuationIdParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Valuation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      tags:
+        - Valuations
+      summary: Update valuation
+      description: Update a valuation (only draft or pending status)
+      operationId: updateValuation
+      parameters:
+        - $ref: '#/components/parameters/ValuationIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateValuationRequest'
+      responses:
+        '200':
+          description: Valuation updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Valuation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Valuations
+      summary: Delete valuation
+      description: Delete a valuation (only draft status)
+      operationId: deleteValuation
+      parameters:
+        - $ref: '#/components/parameters/ValuationIdParam'
+      responses:
+        '204':
+          description: Valuation deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Cannot delete valuation (not in draft status)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /valuations/{valuation_id}/approve:
+    post:
+      tags:
+        - Valuations
+      summary: Approve valuation
+      description: Approve a pending valuation
+      operationId: approveValuation
+      parameters:
+        - $ref: '#/components/parameters/ValuationIdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  description: Approval notes
+      responses:
+        '200':
+          description: Valuation approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Valuation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: User does not have permission to approve valuations
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Valuation cannot be approved (invalid status)
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /valuations/{valuation_id}/comparables:
+    get:
+      tags:
+        - Comparables
+      summary: Get valuation comparables
+      description: Retrieve comparable properties used in a valuation
+      operationId: getValuationComparables
+      parameters:
+        - $ref: '#/components/parameters/ValuationIdParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Comparable'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /comparables/search:
+    post:
+      tags:
+        - Comparables
+      summary: Search comparables
+      description: Search for comparable properties based on criteria
+      operationId: searchComparables
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComparableSearchRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ComparableResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /valuations/{valuation_id}/reports:
+    post:
+      tags:
+        - Reports
+      summary: Generate valuation report
+      description: Generate a valuation report in PDF or Word format
+      operationId: generateValuationReport
+      parameters:
+        - $ref: '#/components/parameters/ValuationIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - format
+              properties:
+                format:
+                  type: string
+                  enum: [pdf, docx]
+                  description: Report format
+                template:
+                  type: string
+                  enum: [standard, uspap, narrative]
+                  description: Report template
+                  default: standard
+                include_comps:
+                  type: boolean
+                  description: Include comparable properties section
+                  default: true
+                include_maps:
+                  type: boolean
+                  description: Include location maps
+                  default: true
+                include_photos:
+                  type: boolean
+                  description: Include property photos
+                  default: true
+      responses:
+        '202':
+          description: Report generation initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [processing, completed, failed]
+                  status_url:
+                    type: string
+                    format: uri
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Reports
+      summary: List valuation reports
+      description: Retrieve all reports for a valuation
+      operationId: listValuationReports
+      parameters:
+        - $ref: '#/components/parameters/ValuationIdParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Report'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /valuations/{valuation_id}/explanations:
+    get:
+      tags:
+        - Explanations
+      summary: Get valuation explanations
+      description: Retrieve AI/ML model explanations for a valuation
+      operationId: getValuationExplanations
+      parameters:
+        - $ref: '#/components/parameters/ValuationIdParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Explanation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Azure AD JWT token
+
+  parameters:
+    ValuationIdParam:
+      name: valuation_id
+      in: path
+      required: true
+      description: Valuation unique identifier
+      schema:
+        type: string
+        format: uuid
+
+    PageParam:
+      name: page
+      in: query
+      description: Page number for pagination
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    LimitParam:
+      name: limit
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    Valuation:
+      type: object
+      properties:
+        valuation_id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        property_id:
+          type: string
+          format: uuid
+        property:
+          $ref: '#/components/schemas/Property'
+        valuation_date:
+          type: string
+          format: date
+        approach:
+          type: string
+          enum: [sales_comparison, income, cost, reconciled]
+        value_amount:
+          type: number
+          format: double
+          description: Estimated property value
+        value_range_low:
+          type: number
+          format: double
+        value_range_high:
+          type: number
+          format: double
+        confidence_score:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Model confidence (0-1)
+        model_version:
+          type: string
+          description: ML model version used
+        status:
+          type: string
+          enum: [draft, pending, approved, rejected]
+        created_by:
+          type: string
+          format: uuid
+        approved_by:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateValuationRequest:
+      type: object
+      required:
+        - property_id
+        - approach
+        - valuation_date
+      properties:
+        property_id:
+          type: string
+          format: uuid
+        approach:
+          type: string
+          enum: [sales_comparison, income, cost, reconciled]
+        valuation_date:
+          type: string
+          format: date
+        notes:
+          type: string
+          maxLength: 2000
+
+    UpdateValuationRequest:
+      type: object
+      properties:
+        approach:
+          type: string
+          enum: [sales_comparison, income, cost, reconciled]
+        valuation_date:
+          type: string
+          format: date
+        notes:
+          type: string
+          maxLength: 2000
+        status:
+          type: string
+          enum: [draft, pending]
+
+    Property:
+      type: object
+      properties:
+        property_id:
+          type: string
+          format: uuid
+        address:
+          $ref: '#/components/schemas/Address'
+        property_type:
+          type: string
+          enum: [office, retail, industrial, multifamily, hotel, mixed_use, land, special_purpose]
+        property_class:
+          type: string
+          enum: [A, B, C, D]
+        gross_building_area:
+          type: number
+          format: double
+        year_built:
+          type: integer
+        occupancy_rate:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+
+    Address:
+      type: object
+      properties:
+        street_number:
+          type: string
+        street_name:
+          type: string
+        unit:
+          type: string
+          nullable: true
+        city:
+          type: string
+        state:
+          type: string
+          pattern: '^[A-Z]{2}$'
+        zip:
+          type: string
+          pattern: '^\d{5}(-\d{4})?$'
+        county:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+
+    Comparable:
+      type: object
+      properties:
+        comp_id:
+          type: string
+          format: uuid
+        valuation_id:
+          type: string
+          format: uuid
+        comp_property_id:
+          type: string
+          format: uuid
+        property:
+          $ref: '#/components/schemas/Property'
+        distance_miles:
+          type: number
+          format: double
+        similarity_score:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+        sale_price:
+          type: number
+          format: double
+        sale_date:
+          type: string
+          format: date
+        adjustments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Adjustment'
+        adjusted_price:
+          type: number
+          format: double
+        weight:
+          type: number
+          format: double
+          description: Weight in final valuation
+
+    Adjustment:
+      type: object
+      properties:
+        adjustment_id:
+          type: string
+          format: uuid
+        category:
+          type: string
+          enum: [location, size, age, condition, amenities, market_conditions, financing, time]
+        amount:
+          type: number
+          format: double
+        percentage:
+          type: number
+          format: double
+        rationale:
+          type: string
+
+    ComparableSearchRequest:
+      type: object
+      required:
+        - property_type
+        - location
+      properties:
+        property_type:
+          type: string
+          enum: [office, retail, industrial, multifamily, hotel, mixed_use, land, special_purpose]
+        location:
+          type: object
+          properties:
+            latitude:
+              type: number
+              format: double
+            longitude:
+              type: number
+              format: double
+            radius_miles:
+              type: number
+              format: double
+              default: 5
+        min_sqft:
+          type: number
+          format: double
+        max_sqft:
+          type: number
+          format: double
+        min_sale_date:
+          type: string
+          format: date
+        max_sale_date:
+          type: string
+          format: date
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+
+    ComparableResult:
+      allOf:
+        - $ref: '#/components/schemas/Property'
+        - type: object
+          properties:
+            similarity_score:
+              type: number
+              format: double
+            distance_miles:
+              type: number
+              format: double
+            recent_sale:
+              type: object
+              properties:
+                sale_price:
+                  type: number
+                  format: double
+                sale_date:
+                  type: string
+                  format: date
+                price_per_sqft:
+                  type: number
+                  format: double
+
+    Report:
+      type: object
+      properties:
+        report_id:
+          type: string
+          format: uuid
+        valuation_id:
+          type: string
+          format: uuid
+        format:
+          type: string
+          enum: [pdf, docx]
+        template:
+          type: string
+        file_url:
+          type: string
+          format: uri
+          description: Download URL (expires in 24 hours)
+        status:
+          type: string
+          enum: [processing, completed, failed]
+        error_message:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Explanation:
+      type: object
+      properties:
+        valuation_id:
+          type: string
+          format: uuid
+        feature_importance:
+          type: object
+          description: SHAP feature importance values
+          additionalProperties:
+            type: number
+            format: double
+        narrative:
+          type: string
+          description: LLM-generated explanation
+        comparable_rationale:
+          type: string
+          description: Why these comps were selected
+        adjustments_summary:
+          type: string
+          description: Summary of adjustments applied
+        model_details:
+          type: object
+          properties:
+            model_name:
+              type: string
+            model_version:
+              type: string
+            training_date:
+              type: string
+              format: date-time
+            accuracy_metrics:
+              type: object
+              properties:
+                mape:
+                  type: number
+                  format: double
+                rmse:
+                  type: number
+                  format: double
+                r2:
+                  type: number
+                  format: double
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              nullable: true
+            trace_id:
+              type: string
+              format: uuid
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized - invalid or missing authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    UnprocessableEntity:
+      description: Unprocessable entity - validation errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Request limit per window
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests in current window
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+          description: Unix timestamp when the rate limit resets
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

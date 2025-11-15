@@ -1,0 +1,85 @@
+{
+  "name": "axxiom-platform",
+  "version": "1.0.0",
+  "description": "AI-powered CRE appraisal, government assessment, and appeals platform",
+  "private": true,
+  "workspaces": [
+    "services/*",
+    "web/*",
+    "ml/*"
+  ],
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm:dev:*\"",
+    "dev:services": "npm run dev --workspace=services",
+    "dev:web": "npm run dev --workspace=web",
+    "build": "npm run build --workspaces --if-present",
+    "build:services": "npm run build --workspace=services",
+    "build:web": "npm run build --workspace=web",
+    "test": "npm run test --workspaces --if-present",
+    "test:unit": "npm run test:unit --workspaces --if-present",
+    "test:integration": "npm run test:integration --workspaces --if-present",
+    "test:e2e": "npm run test:e2e --workspaces --if-present",
+    "test:coverage": "npm run test:coverage --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "npm run lint:fix --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present && rm -rf node_modules",
+    "migrate:latest": "npm run migrate:latest --workspace=services/shared",
+    "migrate:rollback": "npm run migrate:rollback --workspace=services/shared",
+    "seed": "npm run seed --workspace=services/shared",
+    "deploy:dev": "npm run deploy --workspaces -- --env=dev",
+    "deploy:test": "npm run deploy --workspaces -- --env=test",
+    "deploy:prod": "npm run deploy --workspaces -- --env=prod",
+    "infra:plan": "cd infrastructure/terraform && terraform plan",
+    "infra:apply": "cd infrastructure/terraform && terraform apply",
+    "infra:destroy": "cd infrastructure/terraform && terraform destroy",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jtoroni309-creator/CRE-Valuation-and-Assessment-Tool.git"
+  },
+  "keywords": [
+    "real-estate",
+    "cre",
+    "appraisal",
+    "assessment",
+    "property-tax",
+    "ai",
+    "machine-learning",
+    "azure"
+  ],
+  "author": "Axxiom Team",
+  "license": "PROPRIETARY"
+}
