@@ -9,7 +9,7 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "@axxiom/shared": "workspace:*",
+    "@axxiom/shared": "file:../shared",
     "express": "^4.18.2",
     "zod": "^3.22.4",
     "pg": "^8.11.3",

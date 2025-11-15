@@ -23,7 +23,7 @@
   "author": "Axxiom Team",
   "license": "PROPRIETARY",
   "dependencies": {
-    "@axxiom/shared": "workspace:*",
+    "@axxiom/shared": "file:../shared",
     "@azure/identity": "^4.0.0",
     "@azure/storage-blob": "^12.17.0",
     "axios": "^1.6.2",

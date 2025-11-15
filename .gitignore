@@ -13,7 +13,6 @@ pip-delete-this-directory.txt
 .pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
 pnpm-lock.yaml
 
 # Build outputs
