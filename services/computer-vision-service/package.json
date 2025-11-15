@@ -1,0 +1,28 @@
+{
+  "name": "@axxiom/computer-vision-service",
+  "version": "1.0.0",
+  "description": "Computer vision for automated property condition assessment",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@axxiom/shared": "workspace:*",
+    "express": "^4.18.2",
+    "zod": "^3.22.4",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
+    "@azure/cognitiveservices-computervision": "^8.2.0",
+    "@azure/ms-rest-js": "^2.7.0",
+    "axios": "^1.6.2",
+    "sharp": "^0.33.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.5",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
