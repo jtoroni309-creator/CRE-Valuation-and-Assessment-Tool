@@ -16,6 +16,9 @@ const SERVICES = {
   reporting: process.env.REPORTING_SERVICE_URL || 'http://localhost:3005',
   ai: process.env.AI_SERVICE_URL || 'http://localhost:3006',
   dataIngestion: process.env.DATA_INGESTION_SERVICE_URL || 'http://localhost:3007',
+  computerVision: process.env.COMPUTER_VISION_SERVICE_URL || 'http://localhost:3008',
+  geospatial: process.env.GEOSPATIAL_SERVICE_URL || 'http://localhost:3009',
+  portfolio: process.env.PORTFOLIO_SERVICE_URL || 'http://localhost:3010',
 };
 
 /**
@@ -218,6 +221,90 @@ export function setupProxies(app: Express) {
       },
       onProxyReq: forwardContext,
       onError: handleProxyError('data-ingestion'),
+    })
+  );
+
+  // ============================================================================
+  // Computer Vision Service
+  // ============================================================================
+
+  app.use(
+    '/api/v1/vision',
+    authenticate,
+    tenantRateLimit({
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 50,
+    }),
+    createProxyMiddleware({
+      target: SERVICES.computerVision,
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/v1/vision': '/api/v1/vision',
+      },
+      onProxyReq: forwardContext,
+      onError: handleProxyError('computer-vision'),
+    })
+  );
+
+  // ============================================================================
+  // Geospatial Analytics Service
+  // ============================================================================
+
+  app.use(
+    '/api/v1/geospatial',
+    authenticate,
+    tenantRateLimit({
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 100,
+    }),
+    createProxyMiddleware({
+      target: SERVICES.geospatial,
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/v1/geospatial': '/api/v1/geospatial',
+      },
+      onProxyReq: forwardContext,
+      onError: handleProxyError('geospatial'),
+    })
+  );
+
+  // ============================================================================
+  // Portfolio Analytics Service
+  // ============================================================================
+
+  app.use(
+    '/api/v1/portfolio',
+    authenticate,
+    tenantRateLimit({
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 100,
+    }),
+    createProxyMiddleware({
+      target: SERVICES.portfolio,
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/v1/portfolio': '/api/v1/portfolio',
+      },
+      onProxyReq: forwardContext,
+      onError: handleProxyError('portfolio'),
+    })
+  );
+
+  app.use(
+    '/api/v1/analytics',
+    authenticate,
+    tenantRateLimit({
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 100,
+    }),
+    createProxyMiddleware({
+      target: SERVICES.portfolio,
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/v1/analytics': '/api/v1/analytics',
+      },
+      onProxyReq: forwardContext,
+      onError: handleProxyError('portfolio'),
     })
   );
 

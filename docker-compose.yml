@@ -65,6 +65,9 @@ services:
       REPORTING_SERVICE_URL: http://reporting-service:3005
       AI_SERVICE_URL: http://ai-service:3006
       DATA_INGESTION_SERVICE_URL: http://data-ingestion-service:3007
+      COMPUTER_VISION_SERVICE_URL: http://computer-vision-service:3008
+      GEOSPATIAL_SERVICE_URL: http://geospatial-service:3009
+      PORTFOLIO_SERVICE_URL: http://portfolio-service:3010
       AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
       JWT_SECRET: dev-secret-change-in-production
       LOG_LEVEL: debug
@@ -249,6 +252,79 @@ services:
       MLS_ENDPOINT: ${MLS_ENDPOINT:-}
       COSTAR_API_KEY: ${COSTAR_API_KEY:-}
       OCR_API_KEY: ${OCR_API_KEY:-}
+      AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      LOG_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - axxiom-network
+
+  computer-vision-service:
+    build:
+      context: .
+      dockerfile: services/computer-vision-service/Dockerfile
+    container_name: axxiom-computer-vision-service
+    ports:
+      - '3008:3008'
+    environment:
+      NODE_ENV: development
+      PORT: 3008
+      AZURE_COMPUTER_VISION_ENDPOINT: ${AZURE_COMPUTER_VISION_ENDPOINT:-}
+      AZURE_COMPUTER_VISION_API_KEY: ${AZURE_COMPUTER_VISION_API_KEY:-}
+      AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      LOG_LEVEL: debug
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - axxiom-network
+
+  geospatial-service:
+    build:
+      context: .
+      dockerfile: services/geospatial-service/Dockerfile
+    container_name: axxiom-geospatial-service
+    ports:
+      - '3009:3009'
+    environment:
+      NODE_ENV: development
+      PORT: 3009
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: axxiom_dev
+      DB_USER: axxiom_admin
+      DB_PASSWORD: axxiom_dev_password
+      AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      LOG_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - axxiom-network
+
+  portfolio-service:
+    build:
+      context: .
+      dockerfile: services/portfolio-service/Dockerfile
+    container_name: axxiom-portfolio-service
+    ports:
+      - '3010:3010'
+    environment:
+      NODE_ENV: development
+      PORT: 3010
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: axxiom_dev
+      DB_USER: axxiom_admin
+      DB_PASSWORD: axxiom_dev_password
       AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
       JWT_SECRET: dev-secret-change-in-production
       LOG_LEVEL: debug
