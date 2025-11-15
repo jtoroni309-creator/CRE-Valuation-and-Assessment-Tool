@@ -1,0 +1,132 @@
+# ============================================================================
+# Axxiom Platform - Docker Compose for Local Development
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # Database Services
+  # ==========================================================================
+
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: axxiom-postgres
+    environment:
+      POSTGRES_USER: axxiom_admin
+      POSTGRES_PASSWORD: axxiom_dev_password
+      POSTGRES_DB: axxiom_dev
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U axxiom_admin']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - axxiom-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: axxiom-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - axxiom-network
+
+  # ==========================================================================
+  # Backend Microservices
+  # ==========================================================================
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: axxiom-api-gateway
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      VALUATION_SERVICE_URL: http://valuation-service:3001
+      COMPS_SERVICE_URL: http://comps-service:3002
+      ASSESSMENT_SERVICE_URL: http://assessment-service:3003
+      APPEALS_SERVICE_URL: http://appeals-service:3004
+      REPORTING_SERVICE_URL: http://reporting-service:3005
+      AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      LOG_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - axxiom-network
+
+  valuation-service:
+    build:
+      context: .
+      dockerfile: services/valuation-service/Dockerfile
+    container_name: axxiom-valuation-service
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: axxiom_dev
+      POSTGRES_USER: axxiom_admin
+      POSTGRES_PASSWORD: axxiom_dev_password
+      POSTGRES_SSL_MODE: disable
+      AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      LOG_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - axxiom-network
+
+  # ==========================================================================
+  # Frontend Applications
+  # ==========================================================================
+
+  admin-portal:
+    build:
+      context: ./web/admin-portal
+      dockerfile: Dockerfile.dev
+    container_name: axxiom-admin-portal
+    ports:
+      - '3100:3100'
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3000/api/v1
+      NEXT_PUBLIC_APP_URL: http://localhost:3100
+    volumes:
+      - ./web/admin-portal/src:/app/src
+      - ./web/admin-portal/public:/app/public
+    networks:
+      - axxiom-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  axxiom-network:
+    driver: bridge
