@@ -84,12 +84,115 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3001
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: axxiom_dev
-      POSTGRES_USER: axxiom_admin
-      POSTGRES_PASSWORD: axxiom_dev_password
-      POSTGRES_SSL_MODE: disable
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: axxiom_dev
+      DB_USER: axxiom_admin
+      DB_PASSWORD: axxiom_dev_password
+      AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      LOG_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - axxiom-network
+
+  comps-service:
+    build:
+      context: .
+      dockerfile: services/comps-service/Dockerfile
+    container_name: axxiom-comps-service
+    ports:
+      - '3002:3002'
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: axxiom_dev
+      DB_USER: axxiom_admin
+      DB_PASSWORD: axxiom_dev_password
+      AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      LOG_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - axxiom-network
+
+  assessment-service:
+    build:
+      context: .
+      dockerfile: services/assessment-service/Dockerfile
+    container_name: axxiom-assessment-service
+    ports:
+      - '3003:3003'
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: axxiom_dev
+      DB_USER: axxiom_admin
+      DB_PASSWORD: axxiom_dev_password
+      AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      LOG_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - axxiom-network
+
+  appeals-service:
+    build:
+      context: .
+      dockerfile: services/appeals-service/Dockerfile
+    container_name: axxiom-appeals-service
+    ports:
+      - '3004:3004'
+    environment:
+      NODE_ENV: development
+      PORT: 3004
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: axxiom_dev
+      DB_USER: axxiom_admin
+      DB_PASSWORD: axxiom_dev_password
+      AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      LOG_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - axxiom-network
+
+  reporting-service:
+    build:
+      context: .
+      dockerfile: services/reporting-service/Dockerfile
+    container_name: axxiom-reporting-service
+    ports:
+      - '3005:3005'
+    environment:
+      NODE_ENV: development
+      PORT: 3005
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: axxiom_dev
+      DB_USER: axxiom_admin
+      DB_PASSWORD: axxiom_dev_password
       AZURE_REDIS_CONNECTION_STRING: redis://redis:6379
       JWT_SECRET: dev-secret-change-in-production
       LOG_LEVEL: debug
