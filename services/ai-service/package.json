@@ -1,0 +1,32 @@
+{
+  "name": "@axxiom/ai-service",
+  "version": "1.0.0",
+  "description": "Azure OpenAI integration service with RAG architecture",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "jest",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@axxiom/shared": "workspace:*",
+    "express": "^4.18.2",
+    "zod": "^3.22.4",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
+    "@azure/openai": "^1.0.0-beta.8",
+    "@azure/search-documents": "^12.0.0",
+    "langchain": "^0.1.0",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.5",
+    "@types/pg": "^8.10.9",
+    "@types/pdf-parse": "^1.1.4",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
