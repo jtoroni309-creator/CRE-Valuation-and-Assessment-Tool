@@ -1,0 +1,30 @@
+{
+  "name": "@axxiom/portfolio-service",
+  "version": "1.0.0",
+  "description": "Portfolio analytics and management for institutional clients",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "jest",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@axxiom/shared": "workspace:*",
+    "express": "^4.18.2",
+    "zod": "^3.22.4",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
+    "mathjs": "^12.2.0",
+    "simple-statistics": "^7.8.3",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.5",
+    "@types/pg": "^8.10.9",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
