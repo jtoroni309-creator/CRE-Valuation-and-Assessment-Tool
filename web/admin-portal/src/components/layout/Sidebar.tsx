@@ -61,9 +61,19 @@ const navigation: NavItem[] = [
     icon: DocumentIcon,
   },
   {
-    name: 'AI Assistant',
+    name: 'AI Suite',
     href: '/ai',
     icon: SparklesIcon,
+    badge: 'Pro',
+    children: [
+      { name: 'AI Hub', href: '/ai', icon: SparklesIcon },
+      { name: 'Valuation Engine', href: '/ai/valuation', icon: DiamondIcon },
+      { name: 'Market Intelligence', href: '/ai/market', icon: ChartIcon },
+      { name: 'Document AI', href: '/ai/documents', icon: DocumentIcon },
+      { name: 'Vision Analyzer', href: '/ai/vision', icon: EyeIcon },
+      { name: 'Predictions', href: '/ai/predictions', icon: CrystalBallIcon },
+      { name: 'Investment Advisor', href: '/ai/investment', icon: BriefcaseIcon },
+    ],
   },
   {
     name: 'Portfolio',
@@ -574,6 +584,33 @@ function KeyIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+    </svg>
+  );
+}
+
+function DiamondIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l9 6-9 12-9-12 9-6z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9h18" />
+    </svg>
+  );
+}
+
+function EyeIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+  );
+}
+
+function CrystalBallIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <circle cx="12" cy="10" r="7" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 20h8M10 17h4" />
     </svg>
   );
 }
