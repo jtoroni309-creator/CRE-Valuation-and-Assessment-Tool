@@ -1,0 +1,70 @@
+# Production Dockerfile for AI Service
+# Optimized for Google Cloud Run with Vertex AI integration
+
+# Stage 1: Builder
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy root package files for workspace
+COPY package*.json ./
+COPY services/shared/package.json ./services/shared/
+COPY services/ai-service/package.json ./services/ai-service/
+
+# Install all dependencies (including dev for build)
+RUN npm ci --workspace=@axxiom/shared --workspace=@axxiom/ai-service
+
+# Copy source code
+COPY services/shared ./services/shared
+COPY services/ai-service ./services/ai-service
+
+# Build shared library first
+WORKDIR /app/services/shared
+RUN npm run build
+
+# Build the service
+WORKDIR /app/services/ai-service
+RUN npm run build
+
+# Stage 2: Production Runtime
+FROM node:20-alpine AS runner
+
+# Install dumb-init for proper signal handling and wget for health checks
+RUN apk add --no-cache dumb-init wget
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+
+WORKDIR /app
+
+# Copy package files
+COPY --chown=nodejs:nodejs package*.json ./
+COPY --chown=nodejs:nodejs services/shared/package.json ./services/shared/
+COPY --chown=nodejs:nodejs services/ai-service/package.json ./services/ai-service/
+
+# Install production dependencies only
+RUN npm ci --workspace=@axxiom/shared --workspace=@axxiom/ai-service --omit=dev
+
+# Copy built files from builder stage
+COPY --from=builder --chown=nodejs:nodejs /app/services/shared/dist ./services/shared/dist
+COPY --from=builder --chown=nodejs:nodejs /app/services/ai-service/dist ./services/ai-service/dist
+
+# Switch to non-root user
+USER nodejs
+
+# Environment configuration
+ENV NODE_ENV=production
+ENV PORT=8080
+
+# Expose the port (Cloud Run uses 8080 by default)
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the service
+CMD ["node", "services/ai-service/dist/server.js"]
