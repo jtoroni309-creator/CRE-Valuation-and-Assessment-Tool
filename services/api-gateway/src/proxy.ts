@@ -269,6 +269,28 @@ export function setupProxies(app: Express) {
   );
 
   // ============================================================================
+  // Property Map Service (3D Maps Visualization)
+  // ============================================================================
+
+  app.use(
+    '/api/v1/map',
+    authenticate,
+    tenantRateLimit({
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 200,
+    }),
+    createProxyMiddleware({
+      target: SERVICES.geospatial,
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/v1/map': '/api/v1/map',
+      },
+      onProxyReq: forwardContext,
+      onError: handleProxyError('property-map'),
+    })
+  );
+
+  // ============================================================================
   // Portfolio Analytics Service
   // ============================================================================
 
