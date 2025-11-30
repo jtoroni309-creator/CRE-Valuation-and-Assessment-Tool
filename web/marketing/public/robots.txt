@@ -1,0 +1,16 @@
+# Robots.txt for Axxiom Marketing Site
+# https://axxiom.io
+
+User-agent: *
+Allow: /
+
+# Disallow admin and API paths
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+
+# Sitemap location
+Sitemap: https://axxiom.io/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
