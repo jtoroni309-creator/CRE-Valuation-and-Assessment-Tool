@@ -1,0 +1,53 @@
+# ============================================================================
+# Axxiom Platform - Terraform Variables Example
+# ============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+# NEVER commit terraform.tfvars to version control
+# ============================================================================
+
+# Project Configuration
+project_id  = "your-gcp-project-id"
+region      = "us-central1"
+environment = "dev"  # dev, staging, or prod
+
+# Resource Labels
+labels = {
+  team        = "platform"
+  cost-center = "engineering"
+  owner       = "your-email"
+}
+
+# Networking
+subnet_cidr    = "10.0.0.0/20"
+services_cidr  = "10.1.0.0/20"
+connector_cidr = "10.8.0.0/28"
+
+# Database Configuration
+# Dev: db-custom-1-3840 (1 vCPU, 3.75 GB RAM)
+# Staging: db-custom-2-4096 (2 vCPU, 4 GB RAM)
+# Prod: db-custom-4-16384 (4 vCPU, 16 GB RAM)
+db_tier      = "db-custom-2-4096"
+db_disk_size = 50
+
+# Redis Configuration
+# Dev/Staging: 1 GB
+# Prod: 5+ GB
+redis_memory_size = 1
+
+# Document AI Location
+document_ai_location = "us"
+
+# Security
+allowed_origins = [
+  "http://localhost:3000",
+  "https://your-domain.com"
+]
+
+# Monitoring
+alert_email = "devops@your-company.com"
+
+# Feature Flags
+enable_vertex_ai        = true
+enable_document_ai      = true
+enable_vision_ai        = true
+enable_natural_language = true

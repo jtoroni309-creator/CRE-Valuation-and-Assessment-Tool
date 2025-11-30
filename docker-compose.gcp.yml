@@ -1,0 +1,338 @@
+# Docker Compose for local development with GCP service emulation
+# Simulates the GCP Cloud Run environment locally
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database (simulates Cloud SQL)
+  postgres:
+    image: postgres:15-alpine
+    container_name: cre-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-cre_valuation}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/database/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cre-network
+
+  # Redis (simulates Memorystore)
+  redis:
+    image: redis:7-alpine
+    container_name: cre-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cre-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: cre-api-gateway
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-cre_valuation}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/gcp-credentials.json
+    ports:
+      - "3000:8080"
+    volumes:
+      - ./credentials:/app/credentials:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cre-network
+
+  # AI Service
+  ai-service:
+    build:
+      context: .
+      dockerfile: services/ai-service/Dockerfile.gcp
+    container_name: cre-ai-service
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-cre_valuation}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GCP_LOCATION: ${GCP_LOCATION:-us-central1}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/gcp-credentials.json
+    ports:
+      - "3006:8080"
+    volumes:
+      - ./credentials:/app/credentials:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cre-network
+
+  # Valuation Service
+  valuation-service:
+    build:
+      context: .
+      dockerfile: services/valuation-service/Dockerfile
+    container_name: cre-valuation-service
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-cre_valuation}
+      AI_SERVICE_URL: http://ai-service:8080
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/gcp-credentials.json
+    ports:
+      - "3001:8080"
+    volumes:
+      - ./credentials:/app/credentials:ro
+    depends_on:
+      - ai-service
+      - postgres
+      - redis
+    networks:
+      - cre-network
+
+  # Comparables Service
+  comps-service:
+    build:
+      context: .
+      dockerfile: services/comps-service/Dockerfile
+    container_name: cre-comps-service
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-cre_valuation}
+      AI_SERVICE_URL: http://ai-service:8080
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/gcp-credentials.json
+    ports:
+      - "3002:8080"
+    volumes:
+      - ./credentials:/app/credentials:ro
+    depends_on:
+      - ai-service
+      - postgres
+      - redis
+    networks:
+      - cre-network
+
+  # Assessment Service
+  assessment-service:
+    build:
+      context: .
+      dockerfile: services/assessment-service/Dockerfile
+    container_name: cre-assessment-service
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-cre_valuation}
+      AI_SERVICE_URL: http://ai-service:8080
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/gcp-credentials.json
+    ports:
+      - "3003:8080"
+    volumes:
+      - ./credentials:/app/credentials:ro
+    depends_on:
+      - ai-service
+      - postgres
+      - redis
+    networks:
+      - cre-network
+
+  # Appeals Service
+  appeals-service:
+    build:
+      context: .
+      dockerfile: services/appeals-service/Dockerfile
+    container_name: cre-appeals-service
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-cre_valuation}
+      AI_SERVICE_URL: http://ai-service:8080
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/gcp-credentials.json
+    ports:
+      - "3004:8080"
+    volumes:
+      - ./credentials:/app/credentials:ro
+    depends_on:
+      - ai-service
+      - postgres
+      - redis
+    networks:
+      - cre-network
+
+  # Reporting Service
+  reporting-service:
+    build:
+      context: .
+      dockerfile: services/reporting-service/Dockerfile
+    container_name: cre-reporting-service
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-cre_valuation}
+      AI_SERVICE_URL: http://ai-service:8080
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GCP_STORAGE_BUCKET: ${GCP_STORAGE_BUCKET}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/gcp-credentials.json
+    ports:
+      - "3005:8080"
+    volumes:
+      - ./credentials:/app/credentials:ro
+    depends_on:
+      - ai-service
+      - postgres
+      - redis
+    networks:
+      - cre-network
+
+  # Portfolio Service
+  portfolio-service:
+    build:
+      context: .
+      dockerfile: services/portfolio-service/Dockerfile
+    container_name: cre-portfolio-service
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-cre_valuation}
+      AI_SERVICE_URL: http://ai-service:8080
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/gcp-credentials.json
+    ports:
+      - "3007:8080"
+    volumes:
+      - ./credentials:/app/credentials:ro
+    depends_on:
+      - ai-service
+      - postgres
+      - redis
+    networks:
+      - cre-network
+
+  # Geospatial Service
+  geospatial-service:
+    build:
+      context: .
+      dockerfile: services/geospatial-service/Dockerfile
+    container_name: cre-geospatial-service
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-cre_valuation}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/gcp-credentials.json
+    ports:
+      - "3008:8080"
+    volumes:
+      - ./credentials:/app/credentials:ro
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - cre-network
+
+  # Computer Vision Service
+  computer-vision-service:
+    build:
+      context: .
+      dockerfile: services/computer-vision-service/Dockerfile
+    container_name: cre-computer-vision-service
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GCP_LOCATION: ${GCP_LOCATION:-us-central1}
+      GCP_STORAGE_BUCKET: ${GCP_STORAGE_BUCKET}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/gcp-credentials.json
+    ports:
+      - "3009:8080"
+    volumes:
+      - ./credentials:/app/credentials:ro
+    networks:
+      - cre-network
+
+  # Data Ingestion Service
+  data-ingestion-service:
+    build:
+      context: .
+      dockerfile: services/data-ingestion-service/Dockerfile
+    container_name: cre-data-ingestion-service
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-cre_valuation}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GCP_STORAGE_BUCKET: ${GCP_STORAGE_BUCKET}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/gcp-credentials.json
+    ports:
+      - "3010:8080"
+    volumes:
+      - ./credentials:/app/credentials:ro
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - cre-network
+
+  # Admin Portal (Next.js)
+  admin-portal:
+    build:
+      context: ./web/admin-portal
+      dockerfile: Dockerfile
+    container_name: cre-admin-portal
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      NEXT_PUBLIC_API_URL: http://api-gateway:8080
+      NEXT_PUBLIC_GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+    ports:
+      - "3100:8080"
+    depends_on:
+      - api-gateway
+    networks:
+      - cre-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  cre-network:
+    driver: bridge

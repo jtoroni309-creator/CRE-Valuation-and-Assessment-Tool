@@ -1,0 +1,76 @@
+# Production Dockerfile Template for Microservices
+# Optimized for Google Cloud Run
+#
+# Usage: Copy this file to your service directory and update SERVICE_NAME and PORT
+# Example: cp Dockerfile.gcp.template ../ai-service/Dockerfile.gcp
+
+ARG SERVICE_NAME=ai-service
+ARG SERVICE_PORT=3006
+
+# Stage 1: Builder
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy root package files for workspace
+COPY package*.json ./
+COPY services/shared/package.json ./services/shared/
+COPY services/${SERVICE_NAME}/package.json ./services/${SERVICE_NAME}/
+
+# Install all dependencies (including dev for build)
+RUN npm ci --workspace=@axxiom/shared --workspace=@axxiom/${SERVICE_NAME}
+
+# Copy source code
+COPY services/shared ./services/shared
+COPY services/${SERVICE_NAME} ./services/${SERVICE_NAME}
+
+# Build shared library first
+WORKDIR /app/services/shared
+RUN npm run build
+
+# Build the service
+WORKDIR /app/services/${SERVICE_NAME}
+RUN npm run build
+
+# Stage 2: Production Runtime
+FROM node:20-alpine AS runner
+
+# Install dumb-init for proper signal handling in containers
+RUN apk add --no-cache dumb-init wget
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+
+WORKDIR /app
+
+# Copy package files
+COPY --chown=nodejs:nodejs package*.json ./
+COPY --chown=nodejs:nodejs services/shared/package.json ./services/shared/
+COPY --chown=nodejs:nodejs services/${SERVICE_NAME}/package.json ./services/${SERVICE_NAME}/
+
+# Install production dependencies only
+RUN npm ci --workspace=@axxiom/shared --workspace=@axxiom/${SERVICE_NAME} --omit=dev
+
+# Copy built files from builder stage
+COPY --from=builder --chown=nodejs:nodejs /app/services/shared/dist ./services/shared/dist
+COPY --from=builder --chown=nodejs:nodejs /app/services/${SERVICE_NAME}/dist ./services/${SERVICE_NAME}/dist
+
+# Switch to non-root user
+USER nodejs
+
+# Cloud Run uses PORT environment variable, but we also define default
+ENV NODE_ENV=production
+ENV PORT=${SERVICE_PORT}
+
+# Expose the port
+EXPOSE ${SERVICE_PORT}
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health || exit 1
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the service
+CMD ["node", "services/${SERVICE_NAME}/dist/server.js"]
